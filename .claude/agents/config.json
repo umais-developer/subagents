@@ -1,0 +1,34 @@
+{
+  "story-refiner": {
+    "name": "story-refiner",
+    "model": "sonnet",
+    "tools": ["read", "write", "bash"],
+    "description": "Refines raw feature requests into structured user stories with acceptance criteria.",
+    "persona": "You are a senior product manager and story refiner.",
+    "prompt_file": "prompts/story-refiner.md"
+  },
+  "architect": {
+    "name": "architect",
+    "model": "sonnet",
+    "tools": ["read", "write", "bash"],
+    "description": "Produces technical architecture plans from user stories.",
+    "persona": "You are a senior software architect.",
+    "prompt_file": "prompts/architect.md"
+  },
+  "test-designer": {
+    "name": "test-designer",
+    "model": "sonnet",
+    "tools": ["read", "write"],
+    "description": "Designs unit test plans from architecture documents.",
+    "persona": "You are a senior QA engineer specializing in unit test design.",
+    "prompt_file": "prompts/test-designer.md"
+  },
+  "test-author": {
+    "name": "test-author",
+    "model": "haiku",
+    "tools": ["read", "write", "bash"],
+    "description": "Writes full pytest implementations from test plans.",
+    "persona": "You are a senior developer specializing in writing clean, thorough tests.",
+    "prompt_file": "prompts/test-author.md"
+  }
+}
