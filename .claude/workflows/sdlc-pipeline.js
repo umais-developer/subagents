@@ -1,11 +1,12 @@
 export const meta = {
   name: 'sdlc-pipeline',
-  description: 'SDLC pipeline: refine story → architect → design tests → write tests',
+  description: 'SDLC pipeline: story → architecture → tests → implementation → PR',
   phases: [
     { title: 'Stage 1: Refine Story', detail: 'story-refiner agent on Sonnet' },
     { title: 'Stage 2: Architecture', detail: 'architect agent on Sonnet' },
     { title: 'Stage 3: Test Design', detail: 'test-designer agent on Sonnet' },
     { title: 'Stage 4: Write Tests', detail: 'test-author agent on Haiku' },
+    { title: 'Stage 5: Implement', detail: 'implementor agent on Sonnet' },
   ],
 }
 
@@ -200,6 +201,77 @@ if (!testCodeResult) {
 log(`✓ Stage 4 complete`)
 
 // ============================================================================
+// STAGE 5: IMPLEMENTOR
+// Config: .claude/agents/config.json → implementor
+// Prompt: .claude/agents/prompts/implementor.md
+// Creates feature branch, implements code, runs tests, creates PR
+// ============================================================================
+phase('Stage 5: Implement')
+log('Running implementor agent on Claude Sonnet 4.6...')
+const implementationResult = await agent(
+  `Your job:
+- Read ./artifacts/story.md to understand the feature requirements
+- Read ./artifacts/architecture.md to understand the technical design
+- Read ./artifacts/test_cases.py to understand what tests must pass
+- Implement the feature based on the architecture specifications
+- Create a feature branch with a name derived from the user story
+- Commit the changes with a descriptive message
+- Run all tests to verify the implementation
+- Create a pull request with a summary of the changes
+
+Steps:
+1. Extract the feature name from story.md (first line or title)
+2. Create a feature branch: git checkout -b feature/<kebab-case-name>
+   Example: If story is "User-controlled output token limit", branch is feature/user-controlled-output-token-limit
+3. Read architecture.md and test_cases.py to understand requirements
+4. Implement the feature in the appropriate source files (main.py, templates, static, etc.)
+5. Ensure the implementation follows existing code conventions and patterns
+6. Ensure all existing tests still pass: python -m pytest -v
+7. Verify new tests pass: Check that all test cases from test_cases.py execute successfully
+8. Commit changes: git add . && git commit -m "feat: <feature name>"
+9. Create a pull request: gh pr create --title "<feature name>" --body "<detailed description>"
+   - Use GitHub CLI if available and authenticated
+   - Include what was changed, tests added, and how to test
+   - Reference the architecture and design decisions
+10. If PR creation fails, document the branch name and commit hash for manual PR creation
+
+Key Requirements:
+- Use existing code conventions (Flask, Jinja2, JavaScript patterns)
+- Follow the architecture design exactly
+- Ensure all tests pass before creating PR
+- Make the feature branch name human-readable and kebab-case
+- Include detailed PR description with:
+  - What the feature does
+  - How to test it
+  - Files changed
+  - Breaking changes (if any)
+
+Error Handling:
+- If tests fail, fix the implementation and re-run tests
+- If PR creation fails due to authentication, provide the branch name and commits for manual PR
+- If there are merge conflicts, note them and suggest resolution strategy
+
+Report back:
+- Confirm the feature branch was created
+- Confirm all tests passed
+- Confirm the pull request was created (or provide branch details for manual PR creation)
+- Provide the pull request URL or branch name`,
+  {
+    label: 'implementor',
+    phase: 'Stage 5: Implement',
+    subagent_type: 'implementor',
+    model: 'sonnet',
+  }
+)
+
+if (!implementationResult) {
+  log('Stage 5 failed - agent did not complete')
+  return { error: 'Implementor agent failed' }
+}
+
+log(`✓ Stage 5 complete`)
+
+// ============================================================================
 // SUMMARY
 // ============================================================================
 log('✓ SDLC pipeline completed successfully')
@@ -212,7 +284,8 @@ return {
     'artifacts/unit_tests.md (test plan)',
     'artifacts/test_cases.py (pytest implementation)',
   ],
+  implementation: 'Feature branch created with PR',
   config: '.claude/agents/config.json',
   prompts: '.claude/agents/prompts/',
-  message: 'All stages complete. Review artifacts in ./artifacts directory. Agent configs and prompts in .claude/agents/',
+  message: 'All 5 stages complete. Feature branch created and PR submitted. Review code and run tests locally before merging.',
 }

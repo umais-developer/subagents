@@ -30,5 +30,13 @@
     "description": "Writes full pytest implementations from test plans.",
     "persona": "You are a senior developer specializing in writing clean, thorough tests.",
     "prompt_file": "prompts/test-author.md"
+  },
+  "implementor": {
+    "name": "implementor",
+    "model": "sonnet",
+    "tools": ["read", "write", "bash"],
+    "description": "Implements features based on architecture and tests, creates feature branch and pull request.",
+    "persona": "You are a senior full-stack developer implementing features end-to-end.",
+    "prompt_file": "prompts/implementor.md"
   }
 }

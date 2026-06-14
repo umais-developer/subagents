@@ -73,7 +73,7 @@ The `.md` files in this directory (story-refiner.md, architect.md, etc.) serve a
 
 These are **NOT the source of truth for prompts** — see `prompts/` directory for that.
 
-## The Four Agents
+## The Five Agents
 
 ### Stage 1: Story Refiner
 
@@ -138,6 +138,39 @@ These are **NOT the source of truth for prompts** — see `prompts/` directory f
 - Write to disk with verification
 
 **Note:** Uses Haiku (more efficient than Sonnet) since test code generation is straightforward/formulaic once the design is clear.
+
+---
+
+### Stage 5: Implementor
+
+**Model:** Claude Sonnet 4.6  
+**Input:** `artifacts/story.md` + `artifacts/architecture.md` + `artifacts/test_cases.py` + codebase  
+**Output:** Feature branch + Pull Request  
+**Purpose:** Implement the feature end-to-end and submit for code review
+
+**Key responsibilities:**
+- Read and understand the user story, architecture, and test specifications
+- Implement the feature in source code (main.py, templates, static, etc.)
+- Follow existing code conventions and patterns
+- Create a feature branch with kebab-case name from story title
+- Run all tests to verify implementation
+- Commit changes with descriptive message
+- Create a pull request with detailed description
+- Handle errors and provide fallback information (branch name for manual PR)
+
+**Git workflow:**
+1. Create feature branch: `git checkout -b feature/kebab-case-name`
+2. Implement feature code
+3. Run tests: `python -m pytest -v`
+4. Commit: `git commit -m "feat: description"`
+5. Create PR: `gh pr create --title "..." --body "..."`
+
+**Key characteristics:**
+- Uses Sonnet (capable, complex decisions) for code implementation
+- Requires git repository and proper branch setup
+- GitHub CLI optional (provides fallback if not available)
+- Completes the full feature development cycle
+- Moves feature from design/testing to code review stage
 
 ---
 
