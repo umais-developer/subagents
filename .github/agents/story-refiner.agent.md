@@ -18,7 +18,7 @@ Your job:
 Steps:
 1. Analyse the raw feature request
 2. Produce the structured user story with acceptance criteria
-3. Write the output to: `c:\uvproject\artifacts\story.md` (create the `artifacts\` directory if it does not exist)
+3. Write the output to: `c:\Projects\subagents\artifacts\story.md` (create the `artifacts\` directory if it does not exist)
 4. Verify the file was written by reading it back
 5. Report back confirming the file was successfully written
 

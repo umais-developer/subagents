@@ -41,6 +41,6 @@ Senior QA engineer specializing in unit test design.
 ## Key Constraints
 
 - Do NOT write test code—only design the plan and test case descriptions
-- Write to `c:\uvproject\artifacts\unit_tests.md` (absolute path, not relative)
+- Write to `c:\Projects\subagents\artifacts\unit_tests.md` (absolute path, not relative)
 - Report success/failure of file write
 - Organize tests by module or component

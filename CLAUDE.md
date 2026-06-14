@@ -59,7 +59,7 @@ The app uses Flask sessions to persist conversation history client-side, avoidin
 
 ```bash
 # Clone and navigate to project
-cd c:\uvproject
+cd c:\Projects\subagents
 
 # Create virtual environment (if not using uv)
 python -m venv .venv
@@ -102,8 +102,9 @@ The `.claude/agents/` directory contains agent definitions for a structured deve
 - **`architect.md`** — Reads the story and codebase; produces technical architecture plan (components, data flow, API changes, security concerns)
 - **`test-designer.md`** — Reads architecture; designs comprehensive unit test plan (no test code, just test case descriptions)
 - **`test-author.md`** — Reads test plan; writes actual pytest code and runs tests
+- **`implementor.md`** — Implements features based on architecture and tests; creates feature branch and PR
 
-**Key constraint:** All agent prompts require explicit file writes with verification. Absolute paths are used (e.g., `c:\uvproject\artifacts\story.md`). Agents verify files exist after writing before concluding.
+**Key constraint:** All agent prompts require explicit file writes with verification. Absolute paths are used (e.g., `c:\Projects\subagents\artifacts\story.md`). Agents verify files exist after writing before concluding.
 
 **Artifacts directory** (`./artifacts/`) — Stores pipeline outputs:
 - `story.md` — Refined user story

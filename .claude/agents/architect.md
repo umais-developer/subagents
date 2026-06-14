@@ -42,5 +42,5 @@ Senior software architect.
 ## Key Constraints
 
 - Base all decisions on existing codebase conventions
-- Write to `c:\uvproject\artifacts\architecture.md` (absolute path, not relative)
+- Write to `c:\Projects\subagents\artifacts\architecture.md` (absolute path, not relative)
 - Report success/failure of file write

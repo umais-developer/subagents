@@ -42,8 +42,8 @@ Senior developer specializing in writing clean, thorough tests.
 ## Key Constraints
 
 - Generate complete, runnable code (no placeholders or TODOs)
-- Write to `c:\uvproject\artifacts\test_cases.py` (absolute path, not relative)
-- Run tests: `cd c:\uvproject && python -m pytest artifacts\test_cases.py -v`
+- Write to `c:\Projects\subagents\artifacts\test_cases.py` (absolute path, not relative)
+- Run tests: `cd c:\Projects\subagents && python -m pytest artifacts\test_cases.py -v`
 - Fix failing tests and re-write the file if needed
 - Report success/failure of file write and test execution
 

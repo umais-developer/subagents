@@ -38,5 +38,5 @@ Senior product manager and story refiner.
 
 - Be concise and precise
 - Do not invent requirements not implied by the input
-- Write to `c:\uvproject\artifacts\story.md` (absolute path, not relative)
+- Write to `c:\Projects\subagents\artifacts\story.md` (absolute path, not relative)
 - Report success/failure of file write
