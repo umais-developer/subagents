@@ -45,3 +45,6 @@ instance/
 *.tmp
 *.log
 .cache/
+
+# SDLC pipeline artifacts (generated, not source-controlled)
+artifacts/
