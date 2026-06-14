@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Claude Chat{% endblock %}
+
+{% block content %}
+<section class="page-section clearfix">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-xl-8">
+                <div class="bg-faded rounded p-5">
+                    <h2 class="section-heading mb-4">
+                        <span class="section-heading-upper">Ask Anything</span>
+                        <span class="section-heading-lower">Claude Chat</span>
+                    </h2>
+
+                    <!-- Conversation history -->
+                    <div id="conversation" class="mb-4">
+                        {% for msg in messages %}
+                        <div class="chat-bubble chat-bubble--{{ msg.role }} mb-3">
+                            <div class="chat-bubble__label">{{ "You" if msg.role == "user" else "Claude" }}</div>
+                            <div class="chat-bubble__body {% if msg.role == 'assistant' %}markdown-body{% endif %}"
+                                 {% if msg.role == 'assistant' %}data-markdown="{{ msg.content | e }}"{% endif %}>
+                                {% if msg.role == 'user' %}{{ msg.content }}{% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Input -->
+                    <div class="mb-3">
+                        <label for="userMessage" class="form-label">Your message</label>
+                        <textarea class="form-control" id="userMessage" rows="3" placeholder="Type your message... (Shift+Enter for new line)"></textarea>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center flex-wrap">
+                        <select id="modelSelect" class="form-select form-select-sm" style="width:auto;">
+                            {% for model_id, model in models.items() %}
+                            <option value="{{ model_id }}" {% if model_id == default_model %}selected{% endif %}>
+                                {{ model.label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button id="sendBtn" class="btn btn-primary">Send</button>
+                        <button id="clearBtn" class="btn btn-outline-secondary">Clear conversation</button>
+                        <span id="loadingIndicator" class="text-muted small ms-2" style="display:none;">Claude is thinking…</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const conversation = document.getElementById("conversation");
+    const userMessage = document.getElementById("userMessage");
+    const sendBtn = document.getElementById("sendBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const loading = document.getElementById("loadingIndicator");
+    const modelSelect = document.getElementById("modelSelect");
+
+    // Render any server-side markdown bubbles on page load
+    document.querySelectorAll(".markdown-body[data-markdown]").forEach(el => {
+        el.innerHTML = marked.parse(el.getAttribute("data-markdown"));
+    });
+    scrollToBottom();
+
+    function scrollToBottom() {
+        conversation.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+
+    function appendBubble(role, content, meta) {
+        const wrap = document.createElement("div");
+        wrap.className = `chat-bubble chat-bubble--${role} mb-3`;
+
+        const label = document.createElement("div");
+        label.className = "chat-bubble__label";
+        label.textContent = role === "user" ? "You" : "Claude";
+
+        const body = document.createElement("div");
+        body.className = "chat-bubble__body" + (role === "assistant" ? " markdown-body" : "");
+        body.innerHTML = role === "assistant" ? marked.parse(content) : content;
+
+        wrap.appendChild(label);
+        wrap.appendChild(body);
+
+        if (role === "assistant" && meta) {
+            const info = document.createElement("div");
+            info.className = "chat-meta mt-1";
+            info.innerHTML =
+                `<span>${meta.model}</span>` +
+                `<span>${meta.input_tokens.toLocaleString()} in / ${meta.output_tokens.toLocaleString()} out tokens</span>` +
+                `<span>$${meta.cost_usd.toFixed(6)}</span>`;
+            wrap.appendChild(info);
+        }
+
+        conversation.appendChild(wrap);
+        scrollToBottom();
+    }
+
+    async function sendMessage() {
+        const text = userMessage.value.trim();
+        if (!text) return;
+
+        userMessage.value = "";
+        sendBtn.disabled = true;
+        loading.style.display = "inline";
+
+        appendBubble("user", text);
+
+        try {
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: text, model: modelSelect.value })
+            });
+            if (!res.ok && res.headers.get("content-type")?.includes("text/html")) {
+                throw new Error(`Server error ${res.status} — check Flask logs`);
+            }
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            appendBubble("assistant", data.reply, {
+                model: data.model,
+                input_tokens: data.input_tokens,
+                output_tokens: data.output_tokens,
+                cost_usd: data.cost_usd,
+            });
+        } catch (err) {
+            appendBubble("assistant", `⚠️ Error: ${err.message}`);
+        } finally {
+            sendBtn.disabled = false;
+            loading.style.display = "none";
+            userMessage.focus();
+        }
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+
+    userMessage.addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    clearBtn.addEventListener("click", async () => {
+        await fetch("/api/clear", { method: "POST" });
+        conversation.innerHTML = "";
+    });
+</script>
+{% endblock %}
