@@ -39,6 +39,13 @@
                             </option>
                             {% endfor %}
                         </select>
+                        <div class="d-flex flex-column">
+                            <div class="d-flex align-items-center gap-1">
+                                <label for="maxTokensInput" class="form-label mb-0 small">Max tokens:</label>
+                                <input type="number" id="maxTokensInput" class="form-control form-control-sm" style="width:110px;" value="1024" min="1" placeholder="1024">
+                            </div>
+                            <span id="maxTokensError" class="text-danger small" style="display:none;"></span>
+                        </div>
                         <button id="sendBtn" class="btn btn-primary">Send</button>
                         <button id="clearBtn" class="btn btn-outline-secondary">Clear conversation</button>
                         <span id="loadingIndicator" class="text-muted small ms-2" style="display:none;">Claude is thinking…</span>
@@ -52,12 +59,55 @@
 
 {% block scripts %}
 <script>
+    const MODEL_LIMITS = {
+        {% for model_id, model in models.items() %}"{{ model_id }}": {{ model.max_tokens }}{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
+
     const conversation = document.getElementById("conversation");
     const userMessage = document.getElementById("userMessage");
     const sendBtn = document.getElementById("sendBtn");
     const clearBtn = document.getElementById("clearBtn");
     const loading = document.getElementById("loadingIndicator");
     const modelSelect = document.getElementById("modelSelect");
+    const maxTokensInput = document.getElementById("maxTokensInput");
+    const maxTokensError = document.getElementById("maxTokensError");
+
+    function validateMaxTokens() {
+        const raw = maxTokensInput.value.trim();
+        const modelId = modelSelect.value;
+        const ceiling = MODEL_LIMITS[modelId];
+
+        if (raw === "" || isNaN(raw)) {
+            maxTokensError.textContent = "Please enter a valid number.";
+            maxTokensError.style.display = "inline";
+            sendBtn.disabled = true;
+            return false;
+        }
+
+        const val = Number(raw);
+        if (!Number.isInteger(val) || val <= 0) {
+            maxTokensError.textContent = "Output tokens must be a positive integer.";
+            maxTokensError.style.display = "inline";
+            sendBtn.disabled = true;
+            return false;
+        }
+
+        if (val > ceiling) {
+            maxTokensError.textContent = `${modelId} supports at most ${ceiling.toLocaleString()} output tokens.`;
+            maxTokensError.style.display = "inline";
+            sendBtn.disabled = true;
+            return false;
+        }
+
+        maxTokensError.style.display = "none";
+        maxTokensError.textContent = "";
+        sendBtn.disabled = false;
+        return true;
+    }
+
+    maxTokensInput.addEventListener("input", validateMaxTokens);
+    modelSelect.addEventListener("change", validateMaxTokens);
 
     // Render any server-side markdown bubbles on page load
     document.querySelectorAll(".markdown-body[data-markdown]").forEach(el => {
@@ -101,6 +151,9 @@
     async function sendMessage() {
         const text = userMessage.value.trim();
         if (!text) return;
+        if (!validateMaxTokens()) return;
+
+        const maxTokens = parseInt(maxTokensInput.value, 10);
 
         userMessage.value = "";
         sendBtn.disabled = true;
@@ -112,7 +165,7 @@
             const res = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: text, model: modelSelect.value })
+                body: JSON.stringify({ message: text, model: modelSelect.value, max_tokens: maxTokens })
             });
             if (!res.ok && res.headers.get("content-type")?.includes("text/html")) {
                 throw new Error(`Server error ${res.status} — check Flask logs`);

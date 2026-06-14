@@ -16,19 +16,23 @@ MODELS = {
         "label": "Claude Opus 4.8",
         "input_per_m":  15.00,
         "output_per_m": 25.00,
+        "max_tokens": 128000,
     },
     "claude-sonnet-4-6": {
         "label": "Claude Sonnet 4.6",
         "input_per_m":   3.00,
         "output_per_m": 15.00,
+        "max_tokens": 64000,
     },
     "claude-haiku-4-5": {
         "label": "Claude Haiku 4.5",
         "input_per_m":  1.00,
         "output_per_m": 5.00,
+        "max_tokens": 64000,
     },
 }
 DEFAULT_MODEL = "claude-sonnet-4-6"
+DEFAULT_MAX_TOKENS = 1024
 
 def calculate_cost(model_id, input_tokens, output_tokens):
     pricing = MODELS.get(model_id, MODELS[DEFAULT_MODEL])
@@ -55,16 +59,30 @@ def api_chat():
     user_message = data.get("message", "").strip()
     model_id = data.get("model", DEFAULT_MODEL)
     if model_id not in MODELS:
-        model_id = DEFAULT_MODEL
+        return jsonify({"error": f"Unknown model: {model_id}"}), 400
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
+
+    # Validate max_tokens
+    max_tokens_raw = data.get("max_tokens")
+    if max_tokens_raw is None:
+        max_tokens = DEFAULT_MAX_TOKENS
+    else:
+        if not isinstance(max_tokens_raw, int) or isinstance(max_tokens_raw, bool):
+            return jsonify({"error": "max_tokens must be a positive integer."}), 400
+        if max_tokens_raw <= 0:
+            return jsonify({"error": "max_tokens must be a positive integer."}), 400
+        ceiling = MODELS[model_id]["max_tokens"]
+        if max_tokens_raw > ceiling:
+            return jsonify({"error": f"max_tokens exceeds the limit for model {model_id} (max: {ceiling})."}), 400
+        max_tokens = max_tokens_raw
 
     session["messages"].append({"role": "user", "content": user_message})
 
     try:
         result = client.messages.create(
             model=model_id,
-            max_tokens=1024,
+            max_tokens=max_tokens,
             messages=session["messages"]
         )
     except Exception as e:
